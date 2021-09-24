@@ -9,3 +9,68 @@ date: "September 20, 2021"
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
+Let's try to connect to the API
+
+Step 1: Get the neccessary libraries working
+```{r}
+library("tidyverse")
+library("httr")
+library("jsonlite")
+```
+
+Step 2: Call the API
+
+
+```{r}
+# Extracting weather data from APIs
+
+# Call the current weather API
+weather <- GET("http://api.openweathermap.org/data/2.5/weather?q=London,uk&APPID=c8d2a45a584ae7bff7eabb69d4d3fed4")
+
+
+# Gather data about current conditions
+weather_data <- fromJSON(weather$url, flatten = TRUE)
+
+# Data from the main component
+current_temp <- weather_data$main$temp
+feels_like <-weather_data$main$feels_like
+min_temp <-weather_data$main$temp_min
+max_temp <-weather_data$main$temp_max
+pressure <-weather_data$main$pressure
+humidity <-weather_data$main$humidity
+
+# Data from the weather component
+sky <- weather_data$weather$description
+
+# Data from the visibility component
+visibility <- weather_data$visibility
+
+# Data from the wind component
+wind_speed <- weather_data$wind$speed
+wind_direction <- weather_data$wind$deg
+
+temp_data <- tibble(current_temp, feels_like, min_tempmax_temp, pressure, humidity, sky, visibility, wind_speed, wind_direction)
+
+temp_data
+
+# Call the air pollution API
+pollution_info <- GET("http://api.openweathermap.org/data/2.5/air_pollution?lat=36&lon=-78&appid=c8d2a45a584ae7bff7eabb69d4d3fed4")
+
+
+# Gather data about current pollution
+pollution_data <- fromJSON(pollution_info$url, flatten = TRUE)
+
+co <- pollution_data$list$components.co
+no <- pollution_data$list$components.no
+no2 <- pollution_data$list$components.no2
+o3 <- pollution_data$list$components.o3
+so2 <- pollution_data$list$components.so2
+pm2_5 <- pollution_data$list$components.pm2_5
+pm10 <- pollution_data$list$components.pm10
+nh3 <- pollution_data$list$components.nh3
+
+pollution <- tibble(co, no,no2, o3, so2, pm2_5, pm10, nh3)
+
+pollution
+
+```
