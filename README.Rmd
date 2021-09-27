@@ -16,50 +16,88 @@ Step 1: Get the neccessary libraries working
 library("tidyverse")
 library("httr")
 library("jsonlite")
+mykey <- "c8d2a45a584ae7bff7eabb69d4d3fed4"
 ```
 
 Step 2: Call the API
 
 
 ```{r}
-# Extracting weather data from APIs
 
-# Call the current weather API
-weather <- GET("http://api.openweathermap.org/data/2.5/weather?q=London,uk&APPID=c8d2a45a584ae7bff7eabb69d4d3fed4")
+# Function to gather temperature data from a city
 
+temp_info <- function(city, key){
+base <- ("http://api.openweathermap.org/data/2.5/weather?q=")
+city <- (city)
+code <- ("&APPID=")
+key <- (key)
 
-# Gather data about current conditions
+weather <- GET(paste0(base,city,code,key))
 weather_data <- fromJSON(weather$url, flatten = TRUE)
 
 # Data from the main component
-current_temp <- weather_data$main$temp
-feels_like <-weather_data$main$feels_like
-min_temp <-weather_data$main$temp_min
-max_temp <-weather_data$main$temp_max
+current_temp <- (weather_data$main$temp  - 273.16)*1.8 +32
+feels_like <- (weather_data$main$feels_like - 273.16)*1.8 +32
+min_temp <-(weather_data$main$temp_min - 273.16)*1.8 +32
+max_temp <-(weather_data$main$temp_max - 273.16)*1.8 +32
 pressure <-weather_data$main$pressure
 humidity <-weather_data$main$humidity
 
-# Data from the weather component
-sky <- weather_data$weather$description
+temp_data <- tibble(current_temp, feels_like, min_temp,max_temp, pressure, humidity)
+
+return(temp_data)
+}
+
+```
+
+
+```{r}
+# Function to gather wind data from a city
+
+wind_info <- function(city, key){
+base <- ("http://api.openweathermap.org/data/2.5/weather?q=")
+city <- (city)
+code <- ("&APPID=")
+key <- (key)
+
+
+
+weather <- GET(paste0(base,city,code,key))
+weather_data <- fromJSON(weather$url, flatten = TRUE)
 
 # Data from the visibility component
 visibility <- weather_data$visibility
 
 # Data from the wind component
 wind_speed <- weather_data$wind$speed
-wind_direction <- weather_data$wind$deg
+wind_angle <- weather_data$wind$deg
 
-temp_data <- tibble(current_temp, feels_like, min_tempmax_temp, pressure, humidity, sky, visibility, wind_speed, wind_direction)
+# New variable that converts the wind degree to the direction the wind
+# is coming from.
+wind_direction <- ifelse(wind_angle >= 315, "North North West", ifelse(wind_angle >= 270, "West North West", ifelse(wind_angle >= 225, "West South West", ifelse(wind_angle >= 180, "South South West", ifelse(wind_angle >= 135, "South South East", ifelse(wind_angle >= 90, "East South East", ifelse(wind_angle >= 45, "East North East", "North North East")))))))
 
-temp_data
+wind_data <- tibble(visibility, wind_speed,wind_angle,wind_direction )
 
-# Call the air pollution API
-pollution_info <- GET("http://api.openweathermap.org/data/2.5/air_pollution?lat=36&lon=-78&appid=c8d2a45a584ae7bff7eabb69d4d3fed4")
+return(wind_data)
+}
+```
 
+```{r}
+# Function to gather pollution information for a city
+pollution_info <- function(lattitude, longitude, key){
+base <- ("http://api.openweathermap.org/data/2.5/air_pollution?")
+lat <- ("lat=")
+lattitude <- (lattitude)
+long <- ("&lon=")
+longitude <- (longitude)
+code <- ("&APPID=")
+key <- (key)
 
-# Gather data about current pollution
-pollution_data <- fromJSON(pollution_info$url, flatten = TRUE)
+# Call API and get some information
+pollution <- GET(paste0(base,lat,lattitude,long,longitude,code,key))
+pollution_data <- fromJSON(pollution$url, flatten = TRUE)
 
+# Data from the main component
 co <- pollution_data$list$components.co
 no <- pollution_data$list$components.no
 no2 <- pollution_data$list$components.no2
@@ -69,8 +107,91 @@ pm2_5 <- pollution_data$list$components.pm2_5
 pm10 <- pollution_data$list$components.pm10
 nh3 <- pollution_data$list$components.nh3
 
-pollution <- tibble(co, no,no2, o3, so2, pm2_5, pm10, nh3)
+pollution_tibble <- tibble(co, no,no2, o3, so2, pm2_5, pm10, nh3)
 
-pollution
+return(pollution_tibble)
+}
+```
 
+```{r}
+# Function to gather pollution information for a city
+aqi_info <- function(lattitude, longitude, key){
+base <- ("http://api.openweathermap.org/data/2.5/air_pollution?")
+lat <- ("lat=")
+lattitude <- (lattitude)
+long <- ("&lon=")
+longitude <- (longitude)
+code <- ("&APPID=")
+key <- (key)
+
+# Call API and get some information
+aqi_call <- GET(paste0(base,lat,lattitude,long,longitude,code,key))
+aqi_data <- fromJSON(aqi_call$url, flatten = TRUE)
+
+# Data from the main component
+aqi <- aqi_data$list$main.aqi
+
+# New variable that evaluates the aqi
+aqi_level <- ifelse(aqi >= 5, "Very Poor", ifelse(aqi>=4, "Poor", ifelse(aqi >= 3, "Moderate", ifelse(aqi >= 2, "Fair", "Good"))))
+
+aqi_tibble <- tibble(aqi_level)
+
+return(aqi_tibble)
+}
+```
+
+```{r}
+# Function to gather description of current conditions from a city
+
+conditions_info <- function(city, key){
+base <- ("http://api.openweathermap.org/data/2.5/weather?q=")
+city <- (city)
+code <- ("&APPID=")
+key <- (key)
+
+condition <- GET(paste0(base,city,code,key))
+condition_data <- fromJSON(condition$url, flatten = TRUE)
+
+# Data
+condition_des <- wet_data$weather$description
+
+cond_data <- tibble(condition_des)
+
+return(cond_data)
+}
+```
+
+```{r}
+# Function to gather coordinates of a city
+
+coordinates <- function(city, key){
+base <- ("http://api.openweathermap.org/data/2.5/weather?q=")
+city <- (city)
+code <- ("&APPID=")
+key <- (key)
+
+coord <- GET(paste0(base,city,code,key))
+coord_data <- fromJSON(coord$url, flatten = TRUE)
+
+# Data
+longitude <- coord_data$coord$lon
+lattitude <- coord_data$coord$lat
+
+coordinates_data <- tibble(longitude, lattitude)
+
+return(coordinates_data)
+}
+```
+
+
+```{r}
+data <- GET("http://api.openweathermap.org/data/2.5/air_pollution?lat=36&lon=-78&appid=c8d2a45a584ae7bff7eabb69d4d3fed4")
+pol_data <- fromJSON(data$url, flatten = TRUE)
+pol_data$list$main.aqi
+
+data2 <- GET("http://api.openweathermap.org/data/2.5/weather?q=raleigh,us&appid=c8d2a45a584ae7bff7eabb69d4d3fed4")
+wet_data <-fromJSON(data2$url, flatten = TRUE)
+wet_data$weather$description
+wet_data$clouds$all
+wet_data$coord$lat
 ```
