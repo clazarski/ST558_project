@@ -2,7 +2,7 @@
 title: "README"
 author: "Craig Lazarski"
 date: "September 20, 2021"
-
+output: github_document
 ---
 
 ```{r setup, include=FALSE}
@@ -239,17 +239,15 @@ country_code <- paste0(city_data$city, ",",city_data$iso2)
 # Add the new variable to the data frame.
 city_data <- city_data %>% mutate(country_code)
 
-#Test Data
-test_data <- city_data %>% slice_head(n=10)
-test_data[2,]
+# Function to get data from the API
 get_api_data <- function(my_data){
   
 # Get data for the cities
 aqi_data <- lapply(my_data$country_code, FUN=aqi_info, key=mykey)
 
-pollution_data <- lapply(myy_data$country_code, FUN=pollution_info, key=mykey)
+pollution_data <- lapply(my_data$country_code, FUN=pollution_info, key=mykey)
 
-conditions_data <- lapply(myy_data$country_code, FUN=conditions_info, key=mykey)
+conditions_data <- lapply(my_data$country_code, FUN=conditions_info, key=mykey)
 
 temp_data <- lapply(my_data$country_code, FUN=temp_info, key=mykey)
 
@@ -267,16 +265,15 @@ return( my_data %>% mutate(aqi, pollution, temp, wind))
 }
 
 
-# try to run code in blocks so we get
-# all the results in a single data frame
-# - getting HTTP 404 errors on multiple calls...
+# Used this code in chunks to get data
+#all_results <- data.frame()
+#all_results <- rbind(all_results ,get_api_data(city_data[12,]))
 
-all_results <- data.frame()
-all_results <- rbind(all_results ,get_api_data(city_data[12,]))
+# This is the data I collected on 9/28/2021 at 7:00 PM
+city_data <- read_csv("city_info.txt")
 
-write_csv(all_results, "city_info")
-
-city_data <- all_results[-2,]
+# Take out Jakarta as it is an extreme outlier.
+city_data <- city_data[-2,]
 # New variable regarding humidity
 city_data <- city_data %>% mutate(humidity_level = 
   if_else(humidity >= 70, "Intolerable", 
@@ -454,7 +451,6 @@ I was right! There now appears to be a linear trend between the log of both vari
 ```{r}
 scatter1 + stat_smooth(method = "lm", col = "red")
 
-summary.lm(model)
 ```
 
 There appears to be a moderate negative relationship (R^2 = 0.463 ) between the log of CO2 and the log of Ozone.
