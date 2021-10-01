@@ -3,6 +3,7 @@ title: "README"
 author: "Craig Lazarski"
 date: "September 20, 2021"
 output: github_document
+
 ---
 
 ```{r setup, include=FALSE}
@@ -12,14 +13,19 @@ knitr::opts_chunk$set(echo = TRUE)
 
 
 Libraries required for contacting the API
-```{r}
+```{r message=FALSE, warning=FALSE}
 library("tidyverse")
 library("httr")
 library("jsonlite")
 mykey <- "c8d2a45a584ae7bff7eabb69d4d3fed4"
 ```
 
-Functions for gathering data from the Weather API
+#Functions for gathering data from the Weather API
+
+All of the functions are written so that the user inputs a city in the form of "city name, country code" and their key.
+
+## `temp_info`
+The `temp_info` function gathers the current temperature, feels like temperature, min temperature for the day, max temperature for the data, air pressure and humidity. The temperature values are all converted to Faharenheit degrees. The results are returned as a tibble.
 ```{r}
 # Function to gather temperature data from a city
 
@@ -51,8 +57,8 @@ return(temp_data)
 }
 
 ```
-
-
+## `wind_info`
+The `wind_info` function gathers data about current visibility conditions in a city along with the wind speed and angle. The wind angle is an angle measured from North. I wrote code to convert this to a wind direction that is more intuititive to understand. The results are returned as a tibble. 
 ```{r}
 # Function to gather wind data from a city
 
@@ -87,6 +93,9 @@ wind_data <- tibble(visibility, wind_speed,wind_angle,wind_direction )
 return(wind_data)
 }
 ```
+
+## `pollution_info`
+The `pollution_info` function gathers the current measurements of 9 measured pollutants. It returns these as a tibble.
 
 ```{r}
 # Function to gather pollution information for a city
@@ -127,7 +136,8 @@ return(pollution_tibble)
 }
 ```
 
-
+## `conditions_info`
+The `conditions_info` function returns the current conditions such as "clear sky" or "Cloudy. It returns the information as a tibble.
 
 ```{r}
 # Function to gather description of current conditions from a city
@@ -156,33 +166,8 @@ return(cond_data)
 }
 ```
 
-```{r}
-# Function to gather coordinates of a city
-
-coordinates <- function(city, key){
-
-#Construct the call
-base <- ("http://api.openweathermap.org/data/2.5/weather?q=")
-city <- (city)
-code <- ("&APPID=")
-key <- (key)
-
-#Make the call
-coord <- GET(paste0(base,city,code,key))
-
-# Parse the data
-coord_data <- fromJSON(coord$url, flatten = TRUE)
-
-# Gather the data
-longitude <- coord_data$coord$lon
-lattitude <- coord_data$coord$lat
-
-# Return the data as a tibble
-coordinates_data <- tibble(longitude, lattitude)
-
-return(coordinates_data)
-}
-```
+## `aqi_info`  
+The `aqi_info` returns the air quality index rating for a city. The stored data is an integer and the function returns a label from "very poor" to "Good" rather than the integer value.  
 
 ```{r}
 # Function to gather air quality information for a city
@@ -218,12 +203,47 @@ aqi_tibble <- tibble(aqi_level)
 return(aqi_tibble)
 }
 ```
+## `coordinates`  
+The `coordinates` function allows the use to input a city and it will return the coordinates of a city. This function is primarily used as a pass through function for the pollution and aqi functions. These functions require a latitude and longitude location to be inputted. Instead, the user can input a city and in those functions the coordinates function is called to convert the city to a lattitude and longitude so the information can be extracted. 
 
-
-
-
-Data analysis
 ```{r}
+# Function to gather coordinates of a city
+
+coordinates <- function(city, key){
+
+#Construct the call
+base <- ("http://api.openweathermap.org/data/2.5/weather?q=")
+city <- (city)
+code <- ("&APPID=")
+key <- (key)
+
+#Make the call
+coord <- GET(paste0(base,city,code,key))
+
+# Parse the data
+coord_data <- fromJSON(coord$url, flatten = TRUE)
+
+# Gather the data
+longitude <- coord_data$coord$lon
+lattitude <- coord_data$coord$lat
+
+# Return the data as a tibble
+coordinates_data <- tibble(longitude, lattitude)
+
+return(coordinates_data)
+}
+```
+
+
+
+#Data analysis
+
+I was interested in exploring the how the various pollution measures were related to each other and the other weather measures in the largest cities.
+
+I found a data set that lists cities in the world by population and read that into R. I subsetted to focus on only cities with over 1 million people. I then added a new variable that created the appropriate lable for inputting into the functions: "city name, country abbreviation."
+
+When I tried to read in all of the cities into the functions the API returned an error and I only received data for 13 of the cities. I decided to call the values in batches by subsetting the city data and reading in 10 cities at a time until I had 100 cities. I then stored this information for analysis. 
+```{r message=FALSE, warning=FALSE}
 
 # Read in a list of cities with large populations
 cities <- read_csv("cities.csv")
@@ -268,6 +288,9 @@ return( my_data %>% mutate(aqi, pollution, temp, wind))
 # Used this code in chunks to get data
 #all_results <- data.frame()
 #all_results <- rbind(all_results ,get_api_data(city_data[12,]))
+```
+Cleaning up the Data: Once the data was read in observed that some of the variables needed better labels for their values. Specifically, I added a new variable that desribed the humidity, and two variables that gave ratings to the pollution levels for Carbon Dioxide (CO2) and Nitrouse Oxide (NO2) and Ozone (03).
+```{r message=FALSE, warning=FALSE}
 
 # This is the data I collected on 9/28/2021 at 7:00 PM
 city_data <- read_csv("city_info.txt")
@@ -297,6 +320,7 @@ city_data$aqi_level <- factor(city_data$aqi_level, levels=c("Very Poor", "Poor",
 ```
 
 
+Explorataory Analysis:
 What is the current temperature of these countries?
 
 Histogram of temperatures:
@@ -314,7 +338,7 @@ hist_plot
 city_data %>%  summarise(avg = mean(current_temp), median = median(current_temp), sd = sd(current_temp))
 ```
 
-Is there any relationship between temperature and AQI level
+Is there any relationship between temperature and AQI level?
 ```{r}
 box_plot <- ggplot(data= city_data, aes(x=current_temp, y=aqi_level)) +
   geom_boxplot(fill="yellow") +
@@ -324,6 +348,7 @@ box_plot <- ggplot(data= city_data, aes(x=current_temp, y=aqi_level)) +
 
 box_plot
 ```
+
 The better air quality countries have lower temperatures. For fair through very poor ratings the temperatures seem to be fairly similar.
 
 Let's explore the air quality index of countries.
@@ -377,6 +402,7 @@ box_plot3 <- ggplot(data= city_data, aes(x=o3, y=aqi_level)) +
   ylab("AQI")
 box_plot3
 ```
+
 Ozone does not appear to be a strong component of the AQI rating. While there is a general increasing trend from very poor to Good in terms of the amount of Ozone present, there is a lot of overlap in the boxplots indicating that a specific level of ozone may not translate to a AQI rating. 
 
 
