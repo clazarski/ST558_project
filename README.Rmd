@@ -2,7 +2,7 @@
 title: "Interacting with the openweather api"
 author: "Craig Lazarski"
 date: "October 5, 2021"
-toc: TRUE
+toc: true
 ---
 
 This vignette discusses how to access the openweather api using several functions that I created. It also demonstrates an expoloratory data analysis of data collected from the api using the functions outlined below. 
