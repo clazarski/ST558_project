@@ -332,7 +332,7 @@ city_data <- city_data %>% mutate( o3_level = if_else(o3 >= 240, "Very Poor", if
 city_data$aqi_level <- factor(city_data$aqi_level, levels=c("Very Poor", "Poor", "Moderate", "Fair", "Good"))
 
 # New variable for the difference in temperatures
-city_data <- city_data %>% mutate(temp_diff = max_temp - min_temp)
+city_data <- city_data %>% mutate(avg_pollution = (co + no + no2 + o3 + so2 + pm2_5 + pm10 + nh3)/8)
 
 ```
 
@@ -384,7 +384,30 @@ bar_plot
 
 It appears that the majority of countries have a "very poor" air quality rating. This is disappointing
 
+Is there any relationship between the AQI level and the average pollution variable that was created?
 
+```{r}
+bp_avg <- ggplot(data= city_data, aes(x=avg_pollution, y=aqi_level)) +
+  geom_boxplot(fill="yellow") +
+  labs(title = "co by AQI Level") +
+  xlab("Average pollution") +
+  ylab("AQI")
+bp_avg
+```
+There does appear to be a relationship but it is hard to see with the outliers in the very poor category. Let's remove those.
+
+```{r}
+pol_data <- city_data %>% filter(avg_pollution <=500)
+bp_avg2 <- ggplot(data= pol_data, aes(x=avg_pollution, y=aqi_level)) +
+  geom_boxplot(fill="yellow") +
+  labs(title = "average pollution by AQI Level") +
+  xlab("pollution average") +
+  ylab("AQI")
+bp_avg2
+```
+There is a trend that as the average pollution increases the AQI increases. This would assume that all of the measures have equaly weighting in the AQI calculation. It appears that we can use this simple statistics to estimate the AQI rating of a country. 
+
+Let's dig deeper and examine the components more closely.
 ```{r}
 boxplot
 
@@ -441,7 +464,22 @@ plot_grid(bp_co, bp__no, bp_no2, bp_nh3, bp_o3, bp_pm10, bp_pm2_5, bp_so2)
 
 Several pollutants behave as expected. no2, so2, pm_10, and pm2_5 all share a pattern that as their levels increase the aqi decreases. Ozone (o3) stands out as this pattern is not present at all. co, no, and nh3 are hard to determine as they have outliers that are stretching the scales and making it hard to read the graphs. 
 
-I am going to explore Ozone in more detail and Carbon Monoxide (co). Ozone because of it's lack of pattern and Carbon Monoxide since it was hard to determine what was going on based on the graph presented.
+Perhaps just using so2 and no2 as predictors of AQI might work. I'll make a new variable that averages these two values.
+
+```{r}
+
+pol_data2 <- city_data %>% mutate(avg_pollution_02 = (so2 + no2)/2)
+bp_avg2 <- ggplot(data= pol_data2, aes(x=avg_pollution_02, y=aqi_level)) +
+  geom_boxplot(fill="yellow") +
+  labs(title = "AVG so2 and no2 by AQI") +
+  xlab("Average so2 and no2 value") +
+  ylab("AQI")
+bp_avg2
+
+```
+The medians increase from Good to Very Poor ratings, however, there is  overlap between rating groups so this may not be the best predictor for AQI.  
+
+Going back to the plots of all of the pollutants, I am going to explore Ozone in more detail and Carbon Monoxide (co). Ozone because of it's lack of pattern and Carbon Monoxide since it was hard to determine what was going on based on the graph presented.
 
 
 What is the relationship between the AQI index and the ozone level?
