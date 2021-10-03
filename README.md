@@ -3,8 +3,6 @@ Interacting with the openweather api
 Craig Lazarski
 October 5, 2021
 
-true
-
 This vignette discusses how to access the openweather api using several functions that I created. It also demonstrates an expoloratory data analysis of data collected from the api using the functions outlined below.
 
 # Libraries required for contacting the API
