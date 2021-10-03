@@ -1,9 +1,11 @@
 ---
-title: "README"
+title: "Interacting with the openweather api"
 author: "Craig Lazarski"
-date: "September 20, 2021"
-
+date: "October 5, 2021"
+toc: TRUE
 ---
+
+This vignette discusses how to access the openweather api using several functions that I created. It also demonstrates an expoloratory data analysis of data collected from the api using the functions outlined below. 
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
@@ -12,7 +14,7 @@ knitr::opts_chunk$set(echo = TRUE)
 
 
 
-Libraries required for contacting the API
+#Libraries required for contacting the API
 ```{r message=FALSE, warning=FALSE}
 library("tidyverse")
 library("httr")
@@ -25,10 +27,10 @@ mykey <- "c8d2a45a584ae7bff7eabb69d4d3fed4"
 
 #Functions for gathering data from the Weather API
 
-All of the functions are written so that the user inputs a city in the form of "city name, country code" and their key. The API is not case sensitive and is able to handle extra white spaces so it is fairly user friendly already. The API for air quality and pollution levels require the user to input lattitude and longitude coordinates. A coordinates function is used to gather this information when needed so the user can still simply input a city and country.
+All of the functions are written so that the user inputs a city in the form of "city name, country code" and their key. The API is not case sensitive and is able to handle extra white spaces so it is fairly user friendly already. The API for air quality and pollution levels require the user to input latitude and longitude coordinates. A coordinates function is used to gather this information when needed so the user can still simply input a city and country.
 
 ## `temp_info`
-The `temp_info` function gathers the current temperature, feels like temperature, min temperature for the day, max temperature for the data, air pressure and humidity. The temperature values are all converted to Faharenheit degrees. The results are returned as a tibble.
+The `temp_info` function gathers the current temperature, feels like temperature, min temperature for the day, max temperature for the data, air pressure and humidity. The temperature values are all converted to Fahrenheit degrees. The results are returned as a tibble.
 ```{r}
 # Function to gather temperature data from a city
 
@@ -61,7 +63,7 @@ return(temp_data)
 
 ```
 ## `wind_info`
-The `wind_info` function gathers data about current visibility conditions in a city along with the wind speed and angle. The wind angle is an angle measured from North. I wrote code to convert this to a wind direction that is more intuititive to understand. The results are returned as a tibble. 
+The `wind_info` function gathers data about current visibility conditions in a city along with the wind speed and angle. The wind angle is an angle measured from North. I wrote code to convert this to a wind direction that is  intuititive to understand. The results are returned as a tibble. 
 ```{r}
 # Function to gather wind data from a city
 
@@ -110,14 +112,14 @@ pollution_info <- function(city, key){
 # Construct the call
 base <- ("http://api.openweathermap.org/data/2.5/air_pollution?")
 lat <- ("lat=")
-lattitude <- (location$lattitude)
+latitude <- (location$latitude)
 long <- ("&lon=")
 longitude <- (location$longitude)
 code <- ("&APPID=")
 key <- (key)
 
 # Make the call
-pollution <- GET(paste0(base,lat,lattitude,long,longitude,code,key))
+pollution <- GET(paste0(base,lat,latitude,long,longitude,code,key))
 
 # Parse the data
 pollution_data <- fromJSON(pollution$url, flatten = TRUE)
@@ -182,14 +184,14 @@ aqi_info <- function(city, key){
 # Construct the call
 base <- ("http://api.openweathermap.org/data/2.5/air_pollution?")
 lat <- ("lat=")
-lattitude <- (location$lattitude)
+latitude <- (location$latitude)
 long <- ("&lon=")
 longitude <- (location$longitude)
 code <- ("&APPID=")
 key <- (key)
 
 # Make the call
-aqi_call <- GET(paste0(base,lat,lattitude,long,longitude,code,key))
+aqi_call <- GET(paste0(base,lat,latitude,long,longitude,code,key))
 
 # Parse the data
 aqi_data <- fromJSON(aqi_call$url, flatten = TRUE)
@@ -207,7 +209,7 @@ return(aqi_tibble)
 }
 ```
 ## `coordinates`  
-The `coordinates` function allows the use to input a city and it will return the coordinates of a city. This function is primarily used as a pass through function for the pollution and aqi functions. These functions require a latitude and longitude location to be inputted. Instead, the user can input a city and in those functions the coordinates function is called to convert the city to a lattitude and longitude so the information can be extracted. 
+The `coordinates` function allows the use to input a city and it will return the coordinates of a city. This function is primarily used as a pass through function for the pollution and aqi functions. These functions require a latitude and longitude location to be inputted. Instead, the user can input a city and in those functions the coordinates function is called to convert the city to a latitude and longitude so the information can be extracted. 
 
 ```{r}
 # Function to gather coordinates of a city
@@ -228,10 +230,10 @@ coord_data <- fromJSON(coord$url, flatten = TRUE)
 
 # Gather the data
 longitude <- coord_data$coord$lon
-lattitude <- coord_data$coord$lat
+latitude <- coord_data$coord$lat
 
 # Return the data as a tibble
-coordinates_data <- tibble(longitude, lattitude)
+coordinates_data <- tibble(longitude, latitude)
 
 return(coordinates_data)
 }
@@ -243,11 +245,11 @@ return(coordinates_data)
 
 I was interested in exploring the how the various pollution measures were related to each other and also how they are related to other weather measures in the largest cities of the world.
 
-I found a data set that lists cities in the world by population and read that into R (The file can be found in the repo: "cities.csv". I subsetted the data to focus on only cities with over 1 million people. I then added a new variable that created the appropriate label for inputting into the functions: "city name, country abbreviation."
+I found a data set that lists cities in the world by population and read that into R (The file can be found in the repo: "cities.csv". First, I subset the data to focus on only cities with over 1 million people. I then added a new variable that created the appropriate label for inputting into the functions: "city name, country abbreviation."
 
 
 ```{r Data Gathering, eval=FALSE}
-# Note I have turned off this chunk. It gathers the data but because it querries the API so many times it will lock the user out shortly after.
+# Note I have turned off this chunk. It gathers the data but because it queries the API so many times it will lock the user out shortly after.
 
 # Read in a list of cities with large populations
 
@@ -291,7 +293,7 @@ wind <- as.data.frame(do.call(rbind, wind_data))
 return( my_data %>% mutate(aqi, pollution, temp, wind))
 }
 
-# Querrying the API for many cities can be very time consuming and may get me locked out of the API so I restricted my focus to the largest 100 cities.
+# Querying the API for many cities can be very time consuming and may get me locked out of the API so I restricted my focus to the largest 100 cities.
 
 city_data <- city_data %>% arrange(desc(population)) %>% slice(1:100) 
 
@@ -304,7 +306,7 @@ all_results <- rbind(all_results ,get_api_data(city_data))
 write_csv(all_results, "project_data.csv")
 
 ```
-Cleaning up the Data: Once the data was read in observed that some of the variables needed better labels for their values. Specifically, I added a new variable that desribed the humidity, and two variables that gave ratings to the pollution levels for Carbon Dioxide (CO2) and Nitrouse Oxide (NO2) and Ozone (03).
+Cleaning up the Data: Once the data was read in observed that some of the variables needed better labels for their values. Specifically, I added a new variable that described the humidity, and two variables that gave ratings to the pollution levels for Carbon Dioxide (CO2) and Nitrous Oxide (NO2) and Ozone (03).
 ```{r message=FALSE, warning=FALSE}
 
 # This is the data I collected on 10/3/2021 at 10:00 AM
@@ -405,7 +407,7 @@ bp_avg2 <- ggplot(data= pol_data, aes(x=avg_pollution, y=aqi_level)) +
   ylab("AQI")
 bp_avg2
 ```
-There is a trend that as the average pollution increases the AQI increases. This would assume that all of the measures have equaly weighting in the AQI calculation. It appears that we can use this simple statistics to estimate the AQI rating of a country. 
+There is a trend that as the average pollution increases the AQI increases. This would assume that all of the measures have equal weighting in the AQI calculation. It appears that we can use this simple statistics to estimate the AQI rating of a country. 
 
 Let's dig deeper and examine the components more closely.
 ```{r}
@@ -531,7 +533,7 @@ There is a very unusual observation that has an ozone rating over 300.
 outlier <- city_data %>% filter(o3 >= 200)
 outlier
 ```
-The outlier in this data analysis is Rio de Janeiro. I searched on other websites and found the numbers I have from the API are possibily inaccurate. Since the data collected are current measures the values collected at the moment I querried may be unusual due to a sensor glitch or unusual reading at that moment. Using averaged values over time would be a better choice but my functions did not return that information and since I locked myself out of the API due to my previous querry we will have to work with what I have. 
+The outlier in this data analysis is Rio de Janeiro. I searched on other websites and found the numbers I have from the API are possibly inaccurate. Since the data collected are current measures the values collected at the moment I queried may be unusual due to a sensor glitch or unusual reading at that moment. Using averaged values over time would be a better choice but my functions did not return that information and since I locked myself out of the API due to my previous querry we will have to work with what I have. 
 
 I am decided to remove Rio from this analysis and will assume that the other data points are valid.
 
@@ -555,7 +557,7 @@ Summary Statistics for Carbon Monoxide (CO) levels at the different AQI indices.
 ```{r}
 city_data %>% group_by(aqi_level) %>% summarise(avg = mean(co), median = median(co), sd = sd(co))
 ```
-The "good" range has the least variation and the "very poor" range has the most. The average level of CO makes sense as the level increase as the AQI go from "good" to "very poor" however the median does not follow that trend. THe "good" rating actually has a higher median CO level than the "moderate" rating. 
+The "good" range has the least variation and the "very poor" range has the most. The average level of CO makes sense as the level increase as the AQI go from "good" to "very poor" however the median does not follow that trend. The "good" rating actually has a higher median CO level than the "moderate" rating. 
 
 ```{r}
 # Table of AQI Vs Carbon Monoxide
