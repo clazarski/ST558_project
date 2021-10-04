@@ -20,16 +20,38 @@ library("httr")
 library("jsonlite")
 library("cowplot")
 
-mykey <- "c8d2a45a584ae7bff7eabb69d4d3fed4"
-
 ```
 
 #Functions for gathering data from the Weather API
 
 All of the functions are written so that the user inputs a city in the form of "city name, country code" and their key. The API is not case sensitive and is able to handle extra white spaces so it is fairly user friendly already. The API for air quality and pollution levels require the user to input latitude and longitude coordinates. A coordinates function is used to gather this information when needed so the user can still simply input a city and country.
 
+## `country_code`
+
+The `country_code` function will allow the use to input the name of a country and it will indicate the country code. This is esspecially helpful for countries with non-intuitive codes such as Germany which is DE. Using this function the use can then supply the correct input for any country.
+
+```{r}
+# Function to get the country code
+country_code <- function(mycountry){
+  country_data <-read_csv("cities.csv", show_col_types = FALSE)
+  country_data$lcs_country <- stringr::str_to_lower(country_data$country)
+  mycountry <-stringr::str_to_lower(mycountry)
+  results <- country_data %>% filter(lcs_country == mycountry )
+  if (nrow(results) > 0){
+  cc <- as.character(results[1,]$iso2)
+      return(cc)
+  }else{
+    return("Country not found")
+  }
+
+}
+```
+
 ## `temp_info`
 The `temp_info` function gathers the current temperature, feels like temperature, min temperature for the day, max temperature for the data, air pressure and humidity. The temperature values are all converted to Fahrenheit degrees. The results are returned as a tibble.
+
+
+
 ```{r}
 # Function to gather temperature data from a city
 
