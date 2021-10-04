@@ -9,6 +9,7 @@ This vignette discusses how to access the openweather api using several function
 
 ``` r
 library("tidyverse")
+library("knitr")
 library("httr")
 library("jsonlite")
 library("cowplot")
@@ -20,7 +21,7 @@ All of the functions are written so that the user inputs a city in the form of "
 
 ## `country_code`
 
-The `country_code` function will allow the use to input the name of a country and it will indicate the country code. This is esspecially helpful for countries with non-intuitive codes such as Germany which is DE. Using this function the use can then supply the correct input for any country.
+The `country_code` function will allow the use to input the name of a country and it will indicate the country code. This is especially helpful for countries with non-intuitive codes such as Germany which is DE. Using this function the user can then supply the correct input for any country.
 
 ``` r
 # Function to get the country code
@@ -41,7 +42,7 @@ country_code <- function(mycountry){
 
 ## `temp_info`
 
-The `temp_info` function gathers the current temperature, feels like temperature, min temperature for the day, max temperature for the data, air pressure and humidity. The temperature values are all converted to Fahrenheit degrees. The results are returned as a tibble.
+The `temp_info` function gathers the current temperature, feels like temperature, min temperature, max temperature, air pressure and humidity. The temperature values are all converted to Fahrenheit degrees. The results are returned as a tibble.
 
 ``` r
 # Function to gather temperature data from a city
@@ -158,7 +159,7 @@ return(pollution_tibble)
 
 ## `conditions_info`
 
-The `conditions_info` function returns the current conditions such as "clear sky" or "Cloudy". It returns the information as a tibble.
+The `conditions_info` function returns the current conditions such as "clear sky" or "cloudy". It returns the information as a tibble.
 
 ``` r
 # Function to gather description of current conditions from a city
@@ -189,7 +190,7 @@ return(cond_data)
 
 ## `aqi_info`
 
-The `aqi_info` returns the air quality index rating for a city. The stored data is an integer and the function returns a label from "very poor" to "Good" rather than the integer value.
+The `aqi_info` returns the air quality index rating for a city. The stored data is an integer and the function returns a label from "very poor" to "good" rather than the integer value.
 
 ``` r
 # Function to gather air quality information for a city
@@ -228,7 +229,7 @@ return(aqi_tibble)
 
 ## `coordinates`
 
-The `coordinates` function allows the use to input a city and it will return the coordinates of a city. This function is primarily used as a pass through function for the pollution and aqi functions. These functions require a latitude and longitude location to be inputted. Instead, the user can input a city and in those functions the coordinates function is called to convert the city to a latitude and longitude so the information can be extracted.
+The `coordinates` function allows the use to input a city name and country and it will return the coordinates of a city. This function is primarily used as a pass through function for the pollution and aqi functions. These functions require a latitude and longitude location to be inputted. Instead, the user can input a city and in those functions the coordinates function is called to convert the city to a latitude and longitude so the information can be extracted.
 
 ``` r
 # Function to gather coordinates of a city
@@ -262,7 +263,7 @@ return(coordinates_data)
 
 I was interested in exploring the how the various pollution measures were related to each other and also how they are related to other weather measures in the largest cities of the world.
 
-I found a data set that lists cities in the world by population and read that into R (The file can be found in the repo: "cities.csv". First, I subset the data to focus on only cities with over 1 million people. I then added a new variable that created the appropriate label for inputting into the functions: "city name, country abbreviation."
+I found a data set that lists cities in the world by population and read that into R (The file can be found in the repo: "cities.csv"). First, I subset the data to focus on only cities with over 1 million people. I then added a new variable that created the appropriate label for inputting into the functions: "city name, country abbreviation."
 
 ``` r
 # Note I have turned off this chunk. It gathers the data but because it queries the API so many times it will lock the user out shortly after.
@@ -322,7 +323,7 @@ all_results <- rbind(all_results ,get_api_data(city_data))
 write_csv(all_results, "project_data.csv")
 ```
 
-Cleaning up the Data: Once the data was read in observed that some of the variables needed better labels for their values. Specifically, I added a new variable that described the humidity, and two variables that gave ratings to the pollution levels for Carbon Dioxide (CO2) and Nitrous Oxide (NO2) and Ozone (03).
+Cleaning up the Data: Once the data were read in observed that some of the variables needed better labels for their values. Specifically, I added a new variable that described the humidity, and two variables that gave ratings to the pollution levels for Carbon Dioxide (CO2) and Nitrous Oxide (NO2) and Ozone (03).
 
 ``` r
 # This is the data I collected on 10/3/2021 at 10:00 AM
@@ -367,16 +368,18 @@ temp_plot <- ggplot(data= city_data, aes(x=current_temp)) +
 temp_plot
 ```
 
-![](README_files/figure-markdown_github/unnamed-chunk-25-1.png) It appears that regardless of time zone, the largest 100 cities have temperatures in a comfy zone of 65 to 85 degrees F.
+![](README_files/figure-markdown_github/unnamed-chunk-19-1.png)
+
+It appears that regardless of time zone, the largest 100 cities have temperatures in a comfy zone of 65 to 85 degrees F.
 
 ``` r
-city_data %>%  summarise(avg = mean(current_temp), median = median(current_temp), sd = sd(current_temp))
+table <- city_data %>%  summarise(avg = mean(current_temp), median = median(current_temp), sd = sd(current_temp))
+kable(table)
 ```
 
-    ## # A tibble: 1 x 3
-    ##     avg median    sd
-    ##   <dbl>  <dbl> <dbl>
-    ## 1  76.3   78.8  9.24
+|       avg|  median|        sd|
+|---------:|-------:|---------:|
+|  76.25606|  78.773|  9.241634|
 
 The summary measures support that the typical temperatures across the globe for these cities are between 65 and 85 degrees F.
 
@@ -392,7 +395,7 @@ box_plot <- ggplot(data= city_data, aes(x=current_temp, y=aqi_level)) +
 box_plot
 ```
 
-![](README_files/figure-markdown_github/unnamed-chunk-27-1.png)
+![](README_files/figure-markdown_github/unnamed-chunk-21-1.png)
 
 The better air quality countries have lower temperatures. For fair through very poor ratings the temperatures seem to be fairly similar. There does not seem to be much of a relationship between temperature and air quality.
 
@@ -408,7 +411,7 @@ bar_plot <- ggplot(data = city_data, aes(x=aqi_level)) +
 bar_plot
 ```
 
-![](README_files/figure-markdown_github/unnamed-chunk-28-1.png)
+![](README_files/figure-markdown_github/unnamed-chunk-22-1.png)
 
 It appears that the majority of countries have a "very poor" air quality rating. This is disappointing
 
@@ -423,7 +426,7 @@ bp_avg <- ggplot(data= city_data, aes(x=avg_pollution, y=aqi_level)) +
 bp_avg
 ```
 
-![](README_files/figure-markdown_github/unnamed-chunk-29-1.png) There does appear to be a relationship but it is hard to see with the outliers in the very poor category. Let's remove those.
+![](README_files/figure-markdown_github/unnamed-chunk-23-1.png) There does appear to be a relationship but it is hard to see with the outliers in the very poor category. Let's remove those.
 
 ``` r
 pol_data <- city_data %>% filter(avg_pollution <=500)
@@ -435,7 +438,7 @@ bp_avg2 <- ggplot(data= pol_data, aes(x=avg_pollution, y=aqi_level)) +
 bp_avg2
 ```
 
-![](README_files/figure-markdown_github/unnamed-chunk-30-1.png) There is a trend that as the average pollution increases the AQI increases. This would assume that all of the measures have equal weighting in the AQI calculation. It appears that we can use this simple statistics to estimate the AQI rating of a country.
+![](README_files/figure-markdown_github/unnamed-chunk-24-1.png) There is a trend that as the average pollution increases the AQI increases. This would assume that all of the measures have equal weighting in the AQI calculation. It appears that we can use this simple statistics to estimate the AQI rating of a country.
 
 Let's dig deeper and examine the components more closely.
 
@@ -445,7 +448,7 @@ boxplot
 
     ## function (x, ...) 
     ## UseMethod("boxplot")
-    ## <bytecode: 0x000000000b3262a0>
+    ## <bytecode: 0x000000000d6860f8>
     ## <environment: namespace:graphics>
 
 ``` r
@@ -500,7 +503,7 @@ bp_pm10 <- ggplot(data= city_data, aes(x=pm10, y=aqi_level)) +
 plot_grid(bp_co, bp__no, bp_no2, bp_nh3, bp_o3, bp_pm10, bp_pm2_5, bp_so2)
 ```
 
-![](README_files/figure-markdown_github/unnamed-chunk-31-1.png)
+![](README_files/figure-markdown_github/unnamed-chunk-25-1.png)
 
 Several pollutants behave as expected. no2, so2, pm\_10, and pm2\_5 all share a pattern that as their levels increase the aqi decreases. Ozone (o3) stands out as this pattern is not present at all. co, no, and nh3 are hard to determine as they have outliers that are stretching the scales and making it hard to read the graphs.
 
@@ -516,7 +519,7 @@ bp_avg2 <- ggplot(data= pol_data2, aes(x=avg_pollution_02, y=aqi_level)) +
 bp_avg2
 ```
 
-![](README_files/figure-markdown_github/unnamed-chunk-32-1.png) The medians increase from Good to Very Poor ratings, however, there is overlap between rating groups so this may not be the best predictor for AQI.
+![](README_files/figure-markdown_github/unnamed-chunk-26-1.png) The medians increase from Good to Very Poor ratings, however, there is overlap between rating groups so this may not be the best predictor for AQI.
 
 Going back to the plots of all of the pollutants, I am going to explore Ozone in more detail and Carbon Monoxide (co). Ozone because of it's lack of pattern and Carbon Monoxide since it was hard to determine what was going on based on the graph presented.
 
@@ -525,35 +528,35 @@ What is the relationship between the AQI index and the ozone level?
 Summary statistics for Ozone
 
 ``` r
-city_data %>% group_by(aqi_level) %>% summarise(avg = mean(o3), median = median(o3), sd = sd(o3))
+table2 <- city_data %>% group_by(aqi_level) %>% summarise(avg = mean(o3), median = median(o3), sd = sd(o3))
+kable(table2)
 ```
 
-    ## # A tibble: 5 x 4
-    ##   aqi_level   avg median    sd
-    ##   <fct>     <dbl>  <dbl> <dbl>
-    ## 1 Very Poor  51.5   24.7  64.0
-    ## 2 Poor       40.2   36.3  34.9
-    ## 3 Moderate   59.0   54.4  40.2
-    ## 4 Fair       38.9   32.2  31.4
-    ## 5 Good       45.9   54.4  18.5
+| aqi\_level |       avg|  median|        sd|
+|:-----------|---------:|-------:|---------:|
+| Very Poor  |  51.54216|   24.68|  63.96354|
+| Poor       |  40.20444|   36.30|  34.85985|
+| Moderate   |  59.01556|   54.36|  40.22864|
+| Fair       |  38.90231|   32.19|  31.44537|
+| Good       |  45.88667|   54.36|  18.47015|
 
 There is no clear Ozone level that fits in the AQI groupings. Moderate and Good have similar medians despite being very different AQI ratings.
 
 ``` r
 # Table of AQI vs Ozone
-cont_table2 <- table(city_data$aqi_level, city_data$o3_level)
-cont_table2
+cont_table1 <- table(city_data$aqi_level, city_data$o3_level)
+kable(cont_table1)
 ```
 
-    ##            
-    ##             Fair Good Moderate Very Poor
-    ##   Very Poor   12   33        5         1
-    ##   Poor         4   13        1         0
-    ##   Moderate     3    5        1         0
-    ##   Fair         4    9        0         0
-    ##   Good         2    7        0         0
+|           |  Fair|  Good|  Moderate|  Very Poor|
+|:----------|-----:|-----:|---------:|----------:|
+| Very Poor |    12|    33|         5|          1|
+| Poor      |     4|    13|         1|          0|
+| Moderate  |     3|     5|         1|          0|
+| Fair      |     4|     9|         0|          0|
+| Good      |     2|     7|         0|          0|
 
-Most countries appear to have a "good" ozone rating. There does not seem to be much of a relationship between the AQI and Ozone rating since the spread in the Good Ozone rating is fairly evenly distributed.
+Most countries appear to have a "good" ozone rating. There does not seem to be much of a relationship between the AQI and Ozone rating since the spread in the good Ozone rating is fairly evenly distributed.
 
 ``` r
 bar_plot3 <- ggplot(data = city_data, aes(x=aqi_level)) +
@@ -565,9 +568,9 @@ bar_plot3 <- ggplot(data = city_data, aes(x=aqi_level)) +
 bar_plot3
 ```
 
-![](README_files/figure-markdown_github/unnamed-chunk-35-1.png)
+![](README_files/figure-markdown_github/unnamed-chunk-29-1.png)
 
-The bar plot shows that within each AQI rating most countries have a "good" ozone rating.
+The bar plot shows that within each AQI rating most countries have a good ozone rating.
 
 ``` r
 box_plot3 <- ggplot(data= city_data, aes(x=o3, y=aqi_level)) +
@@ -578,9 +581,9 @@ box_plot3 <- ggplot(data= city_data, aes(x=o3, y=aqi_level)) +
 box_plot3
 ```
 
-![](README_files/figure-markdown_github/unnamed-chunk-36-1.png)
+![](README_files/figure-markdown_github/unnamed-chunk-30-1.png)
 
-Ozone does not appear to be a strong component of the AQI rating. While there is a general increasing trend from very poor to Good in terms of the amount of Ozone present, there is a lot of overlap in the boxplots indicating that a specific level of ozone may not translate to a AQI rating.
+Ozone does not appear to be a strong component of the AQI rating. While there is a general increasing trend from very poor to good in terms of the amount of Ozone present, there is a lot of overlap in the boxplots indicating that a specific level of ozone may not translate to a AQI rating.
 
 There is a very unusual observation that has an ozone rating over 300.
 
@@ -602,7 +605,7 @@ outlier
 
 The outlier in this data analysis is Rio de Janeiro. I searched on other websites and found the numbers I have from the API are possibly inaccurate. Since the data collected are current measures the values collected at the moment I queried may be unusual due to a sensor glitch or unusual reading at that moment. Using averaged values over time would be a better choice but my functions did not return that information and since I locked myself out of the API due to my previous querry we will have to work with what I have.
 
-I am decided to remove Rio from this analysis and will assume that the other data points are valid.
+I decided to remove Rio from this analysis and will assume that the other data points are valid.
 
 ``` r
 city_data2 <- city_data %>% filter(o3 <= 200)
@@ -616,42 +619,42 @@ box_plot4 <- ggplot(data= city_data2, aes(x=o3, y=aqi_level)) +
 box_plot4
 ```
 
-![](README_files/figure-markdown_github/unnamed-chunk-38-1.png) Without the outlier the same conclusion is reached. Ozone does not appear to be a major contributing factor to the AQI value of a city.
+![](README_files/figure-markdown_github/unnamed-chunk-32-1.png) Without the outlier the same conclusion is reached. Ozone does not appear to be a major contributing factor to the AQI value of a city.
 
 What is the relationship between the AQI and Carbon Monoxide levels?
 
 Summary Statistics for Carbon Monoxide (CO) levels at the different AQI indices.
 
 ``` r
-city_data %>% group_by(aqi_level) %>% summarise(avg = mean(co), median = median(co), sd = sd(co))
+table3 <- city_data %>% group_by(aqi_level) %>% summarise(avg = mean(co), median = median(co), sd = sd(co))
+kable(table3)
 ```
 
-    ## # A tibble: 5 x 4
-    ##   aqi_level   avg median     sd
-    ##   <fct>     <dbl>  <dbl>  <dbl>
-    ## 1 Very Poor 2009.   975. 3645. 
-    ## 2 Poor       582.   527.  215. 
-    ## 3 Moderate   416.   324.  239. 
-    ## 4 Fair       457.   447.  138. 
-    ## 5 Good       353.   340.   71.1
+| aqi\_level |        avg|   median|          sd|
+|:-----------|----------:|--------:|-----------:|
+| Very Poor  |  2008.8361|  974.660|  3644.52949|
+| Poor       |   582.2722|  527.385|   215.20240|
+| Moderate   |   415.7489|  323.770|   238.78710|
+| Fair       |   456.5169|  447.270|   137.85980|
+| Good       |   353.4444|  340.460|    71.12923|
 
-The "good" range has the least variation and the "very poor" range has the most. The average level of CO makes sense as the level increase as the AQI go from "good" to "very poor" however the median does not follow that trend. The "good" rating actually has a higher median CO level than the "moderate" rating.
+The good range has the least variation and the very poor range has the most. The average level of CO makes sense as the level increase as the AQI go from good to very poor however the median does not follow that trend. The good rating actually has a higher median CO level than the moderate rating.
 
 ``` r
 # Table of AQI Vs Carbon Monoxide
-cont_table3 <- table(city_data$aqi_level, city_data$CO_level)
-cont_table3
+cont_table2 <- table(city_data$aqi_level, city_data$CO_level)
+kable(cont_table2)
 ```
 
-    ##            
-    ##             Harmful Very Unhealthy
-    ##   Very Poor      50              1
-    ##   Poor           17              1
-    ##   Moderate        7              2
-    ##   Fair           11              2
-    ##   Good            7              2
+|           |  Harmful|  Very Unhealthy|
+|:----------|--------:|---------------:|
+| Very Poor |       50|               1|
+| Poor      |       17|               1|
+| Moderate  |        7|               2|
+| Fair      |       11|               2|
+| Good      |        7|               2|
 
-The only categories of CO present in the data are harmful and very unhealthy.67 Countries have harmful CO levels and have very poor or poor AQI levels. CO appears to have more of an impact on AQI than Ozone.
+The only categories of CO present in the data are harmful and very unhealthy. 67 Countries have harmful CO levels and have very poor or poor AQI levels. CO appears to have more of an impact on AQI than Ozone.
 
 ``` r
 bar_plot2 <- ggplot(data = city_data, aes(x=aqi_level)) +
@@ -662,11 +665,11 @@ bar_plot2 <- ggplot(data = city_data, aes(x=aqi_level)) +
 bar_plot2
 ```
 
-![](README_files/figure-markdown_github/unnamed-chunk-41-1.png)
+![](README_files/figure-markdown_github/unnamed-chunk-35-1.png)
 
-Again we are seeing that in every AQI category the majority of countries have harmful levels of CO2.
+Again we are seeing that in every AQI category the majority of countries have harmful levels of CO.
 
-What is the difference in CO2 levels by AQI index?
+What is the difference in CO levels by AQI index?
 
 ``` r
 box_plot3 <- ggplot(data= city_data, aes(x=co, y=aqi_level)) +
@@ -677,7 +680,7 @@ box_plot3 <- ggplot(data= city_data, aes(x=co, y=aqi_level)) +
 box_plot3
 ```
 
-![](README_files/figure-markdown_github/unnamed-chunk-42-1.png)
+![](README_files/figure-markdown_github/unnamed-chunk-36-1.png)
 
 The range of CO levels per AQI index appears to be rather small. The graph shows that as the AQI becomes worse that the CO increases at a fairly fixed rate indicating CO is a strong component of AQI.
 
@@ -694,9 +697,9 @@ box_plot4 <- ggplot(data= city_data3, aes(x=co, y=aqi_level)) +
 box_plot4
 ```
 
-![](README_files/figure-markdown_github/unnamed-chunk-43-1.png)
+![](README_files/figure-markdown_github/unnamed-chunk-37-1.png)
 
-Removing the extreme observations it can now be observed that there is a general increasing trend in the median values from Good to Very Poor. However, the moderate category stands out in that it has the lowest median. This may be due to a lack of countries that fall into this category. From the first histogram it is evident that only 9 countries were classified as Moderate which is the lowest of all 5 categories.
+Removing the extreme observations it can now be observed that there is a general increasing trend in the median values from good to very poor. However, the moderate category stands out in that it has the lowest median. This may be due to a lack of countries that fall into this category. From the first histogram it is evident that only 9 countries were classified as moderate which is the lowest of all 5 categories.
 
 How are Ozone and Carbon Monoxide related to each other?
 
@@ -710,7 +713,7 @@ scatter1 <- ggplot(data= city_data2, aes(x=co, y=o3)) +
 scatter1
 ```
 
-![](README_files/figure-markdown_github/unnamed-chunk-44-1.png)
+![](README_files/figure-markdown_github/unnamed-chunk-38-1.png)
 
 There does not appear to be a linear relationship but the scales are very different so a transformation may yield more interesting results.
 
@@ -725,7 +728,7 @@ scatter2 <- ggplot(data= city_data2, aes(x=log(co), y=o3)) +
 scatter2
 ```
 
-![](README_files/figure-markdown_github/unnamed-chunk-45-1.png)
+![](README_files/figure-markdown_github/unnamed-chunk-39-1.png)
 
 ``` r
 scatter3 <- ggplot(data = city_data2, aes(x=log1p(co), y=log(o3))) +
@@ -736,7 +739,7 @@ scatter3 <- ggplot(data = city_data2, aes(x=log1p(co), y=log(o3))) +
 scatter3
 ```
 
-![](README_files/figure-markdown_github/unnamed-chunk-45-2.png)
+![](README_files/figure-markdown_github/unnamed-chunk-39-2.png)
 
 The second scatterplot appears to have a more linear relationship and this one used the log of both variables. It appears a power model may be good fit.
 
@@ -748,7 +751,7 @@ scatter3 + stat_smooth(method = "lm", col = "red")
 
     ## Warning: Removed 14 rows containing non-finite values (stat_smooth).
 
-![](README_files/figure-markdown_github/unnamed-chunk-46-1.png)
+![](README_files/figure-markdown_github/unnamed-chunk-40-1.png)
 
 ``` r
 model <- lm(log1p(o3) ~ log(co), data=city_data2)
